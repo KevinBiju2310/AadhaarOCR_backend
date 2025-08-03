@@ -1,20 +1,48 @@
 export interface AadhaarData {
-  name?: string;
   aadhaarNumber?: string;
+  name?: string;
   dateOfBirth?: string;
   gender?: string;
   address?: string;
+  pincode?: string;
   fatherName?: string;
 }
 
 export interface OCRResult {
-  front?: AadhaarData;
-  back?: AadhaarData;
-  success: boolean;
-  message: string;
+  frontSide: AadhaarData;
+  backSide: AadhaarData;
+  combined: AadhaarData;
 }
 
-export interface UploadedFiles {
-  front?: Express.Multer.File[];
-  back?: Express.Multer.File[];
+export interface ProcessedText {
+  text: string;
+}
+
+export interface VisionAPIResponse {
+  textAnnotations: Array<{
+    description: string;
+    confidence?: number;
+    boundingPoly?: {
+      vertices: Array<{ x: number; y: number }>;
+    };
+  }>;
+  fullTextAnnotation?: {
+    text: string;
+  };
+}
+
+export interface UploadedFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  destination: string;
+  filename: string;
+  path: string;
+  size: number;
+}
+
+export interface MulterFiles {
+  frontImage?: UploadedFile[];
+  backImage?: UploadedFile[];
 }

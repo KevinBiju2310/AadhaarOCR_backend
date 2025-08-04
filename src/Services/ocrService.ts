@@ -14,11 +14,6 @@ class VisionService {
       const [result] = await this.client.textDetection(imagePath);
       // console.log("Result: ", result);
       const detections = result.textAnnotations || [];
-      // console.log("Detections: ", detections);
-      // return detections.map((detection) => ({
-      //   text: detection.description || "",
-      //   confidence: detection.confidence || 0.8,
-      // }));
       const firstDetection = detections[0];
 
       return [
@@ -32,8 +27,49 @@ class VisionService {
     }
   }
 
+  private validateAadhaarCard(extractedText: ProcessedText[]): {
+    isValid: boolean;
+    reason?: string;
+  } {
+    const fullText = extractedText.map((item) => item.text).join(" ");
+    const normalizedText = fullText.toLowerCase();
+    const englishKeywords = [
+      "government of india",
+      "unique identification authority of india",
+      "aadhaar",
+    ];
+    const hindiKeywords = [
+      "भारत सरकार",
+      "भारतीय विशिष्ट पहचान प्राधिकरण",
+      "आधार",
+    ];
+    const hasEnglishKeywords = englishKeywords.some((keyword) =>
+      normalizedText.includes(keyword.toLowerCase())
+    );
+    const hasHindiKeywords = hindiKeywords.some((keyword) =>
+      fullText.includes(keyword)
+    );
+    const aadhaarPattern = /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/;
+    const hasAadhaarNumber = aadhaarPattern.test(fullText);
+    if (!hasAadhaarNumber) {
+      return { isValid: false, reason: "No valid Aadhaar number found" };
+    }
+    if (!hasEnglishKeywords && !hasHindiKeywords) {
+      return {
+        isValid: false,
+        reason:
+          "Document does not contain required Government of India or UIDAI identifiers",
+      };
+    }
+    return { isValid: true };
+  }
+
   parseAadhaarFront(extractedText: ProcessedText[]): AadhaarData {
     try {
+      const validation = this.validateAadhaarCard(extractedText);
+      if (!validation.isValid) {
+        throw new Error(`Invalid Aadhaar card: ${validation.reason}`);
+      }
       const fullText = extractedText.map((item) => item.text).join(" ");
       const lines = fullText
         .split("\n")
@@ -86,12 +122,16 @@ class VisionService {
       return data;
     } catch (error) {
       console.error("Error in AadharFront: ", error);
-      throw new Error("Error in Parsing FrontSide");
+      throw error;
     }
   }
 
   parseAadhaarBack(extractedText: ProcessedText[]): AadhaarData {
     try {
+      const validation = this.validateAadhaarCard(extractedText);
+      if (!validation.isValid) {
+        throw new Error(`Invalid Aadhaar card: ${validation.reason}`);
+      }
       const fullText = extractedText.map((item) => item.text).join(" ");
       const lines = fullText
         .split("\n")
@@ -133,7 +173,7 @@ class VisionService {
       return data;
     } catch (error) {
       console.error("Error in AadharBack: ", error);
-      throw new Error("Error in Parsing BackSide");
+      throw error;
     }
   }
 

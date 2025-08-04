@@ -26,16 +26,8 @@ const handleOcrProcess = async (req: Request, res: Response) => {
       const frontText = await visionService.extractTextFromImage(
         frontImagePath
       );
-      console.log(frontText,"frontText");
+      console.log(frontText, "frontText");
       result.frontSide = visionService.parseAadhaarFront(frontText);
-
-      // const frontConfidence =
-      //   frontText.length > 0
-          // ? frontText.reduce((sum, item) => sum + item.confidence, 0) 
-      //       frontText.length
-      //     : 0;
-      // totalConfidence += frontConfidence;
-      // processedSides++;
 
       console.log("Front side extracted:", result.frontSide);
     }
@@ -44,16 +36,8 @@ const handleOcrProcess = async (req: Request, res: Response) => {
       // console.log("Processing back image:", backImagePath);
 
       const backText = await visionService.extractTextFromImage(backImagePath);
-      console.log(backText,"backText");
+      console.log(backText, "backText");
       result.backSide = visionService.parseAadhaarBack(backText);
-
-      // const backConfidence =
-      //   backText.length > 0
-      //     ? backText.reduce((sum, item) => sum + item.confidence, 0) /
-      //       backText.length
-      //     : 0;
-      // totalConfidence += backConfidence;
-      // processedSides++;
 
       console.log("Back side extracted:", result.backSide);
     }
@@ -61,9 +45,6 @@ const handleOcrProcess = async (req: Request, res: Response) => {
       result.frontSide,
       result.backSide
     );
-    // result.confidence =
-    //   processedSides > 0 ? (totalConfidence / processedSides) * 100 : 0;
-    // result.processingTime = Date.now() - startTime;
     console.log("Combined result:", result.combined);
     res.json({
       success: true,
@@ -72,6 +53,22 @@ const handleOcrProcess = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error processing Aadhaar images:", error);
+    if (error instanceof Error) {
+      if (error.message.includes("Invalid Aadhaar card")) {
+        return res.status(400).json({
+          error: "Invalid document",
+          message: error.message,
+          details:
+            "The uploaded images do not appear to be valid Aadhaar cards",
+        });
+      }
+    }
+    res.status(500).json({
+      error: "Processing failed",
+      message: "An error occurred while processing the Aadhaar card images",
+      details:
+        "Please try again with clear, high-quality images of both sides of the Aadhaar card",
+    });
   }
 };
 

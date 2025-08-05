@@ -15,7 +15,13 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-app.use(cors());
+const allowedOrigin = process.env.CLIENT_ORIGIN;
+
+app.use(
+  cors({
+    origin: allowedOrigin,
+  })
+);
 app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 

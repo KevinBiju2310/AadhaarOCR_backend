@@ -15,7 +15,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-const allowedOrigin = process.env.CLIENT_ORIGIN;
+const allowedOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 app.use(
   cors({
